@@ -14,4 +14,4 @@ api_router.include_router(port_block_mappings.router, prefix="/port_block_mappin
 api_router.include_router(port_mappings.router, prefix="/port_mappings")
 api_router.include_router(session_mappings.router, prefix="/session_mappings")
 api_router.include_router(deterministic_nat.router, prefix="/deterministic_nat")
-api_router.include_router(admin.router, prefix="/admin")
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
