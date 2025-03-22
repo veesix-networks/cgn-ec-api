@@ -2,8 +2,6 @@ name: Lint with Ruff
 
 on:
   push:
-    branches:
-      - '*'
     branches-ignore:
       - main
 
