@@ -1,7 +1,7 @@
-from datetime import datetime
-from sqlmodel import select, Session, text
+from sqlmodel import Session, text, select
 
 from cgn_ec_api.crud.base import CRUDBase
+from cgn_ec_api.models import HyperTableChunk, HyperTableCompressionStats
 
 
 class CRUDAdmin(CRUDBase[None, None, None]):
@@ -12,22 +12,36 @@ class CRUDAdmin(CRUDBase[None, None, None]):
         result = await db.exec(query, params={"hypertable_name": hypertable})
         return result.scalar()
 
-    async def get_hypertable_chunks(self, db: Session, hypertable: str) -> list[dict]:
-        query = text(
-            "SELECT * FROM timescaledb_information.chunks WHERE hypertable_name = :hypertable_name"
+    async def get_hypertable_chunks(
+        self, db: Session, hypertable: str
+    ) -> list[HyperTableChunk]:
+        query = select(HyperTableChunk).where(
+            HyperTableChunk.hypertable_name == hypertable
         )
-        result = await db.exec(query, params={"hypertable_name": hypertable})
-        chunks = result.fetchall()
+        results = await db.exec(query)
 
-        # If no chunks found, return empty list
-        if not chunks:
-            return {"hypertable": hypertable, "chunks": []}
+        return results.all()
 
-        # Format results as a list of dictionaries
-        return {
-            "hypertable": hypertable,
-            "chunks": [dict(row._mapping) for row in chunks],
-        }
+    async def get_hypertable_chunks_stats(
+        self, db: Session, hypertable: str, limit: int = 100
+    ) -> list[HyperTableCompressionStats]:
+        query = text(
+            "SELECT * FROM chunk_compression_stats(:hypertable) ORDER BY chunk_name LIMIT (:limit)"
+        )
+
+        result = await db.exec(query, params={"hypertable": hypertable, "limit": limit})
+        rows = result.mappings().all()
+        return [HyperTableCompressionStats(**stat) for stat in rows]
+
+    async def get_hypertable_size(self, db: Session, hypertable: str) -> int:
+        query = text("SELECT * FROM hypertable_size(:hypertable)")
+
+        result = await db.exec(query, params={"hypertable": hypertable})
+        test = result.one_or_none()
+        if not test:
+            return None
+
+        return test[0]
 
 
 admin = CRUDAdmin(None)

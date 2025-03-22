@@ -1,12 +1,9 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from fastapi import APIRouter
-from fastapi.exceptions import HTTPException
 from cgn_ec_models.sqlmodel import NATSessionMapping
 
-from cgn_ec_api.config import settings
 from cgn_ec_api.dependencies import DatabaseDep
-from cgn_ec_api import crud
 
 router = APIRouter()
 
