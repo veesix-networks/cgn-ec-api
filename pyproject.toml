@@ -15,6 +15,7 @@ cgn-ec-models = "^0.1.0"
 fastapi = "^0.115.11"
 psycopg = {extras = ["binary"], version = "^3.2.6"}
 structlog = "^25.2.0"
+redis = "^5.2.1"
 
 
 [build-system]

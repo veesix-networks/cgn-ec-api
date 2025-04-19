@@ -4,6 +4,8 @@ from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel.sql.expression import Select, SelectOfScalar
 
+from cgn_ec_api.models.query import QueryParams
+
 from structlog import get_logger
 
 logger = get_logger("cgn-ec.crud")
@@ -17,16 +19,16 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[ModelType]) -> None:
         """CRUD Object with default methods to Create, Read, Update and Delete (CRUD).
         Args:
-            model:  SQLModel
+            model:  SQLModel.
         """
         self.model = model
 
     async def get(self, db: AsyncSession, id: int) -> Optional[ModelType]:
-        """Get a single object from the database and load into the ModelType
+        """Get a single object from the database and load into the ModelType.
 
         Args:
-            db:             SQLModel Session
-            id:             Database ID
+            db:             SQLModel Session.
+            id:             Database ID.
         """
         result = await db.exec(select(self.model).where(self.model.id == id))
         return result.one_or_none()
@@ -35,10 +37,9 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self,
         db: AsyncSession,
         query: Select[ModelType] | SelectOfScalar[ModelType] | None = None,
-        skip: int = 0,
-        limit: int = 100,
+        params: QueryParams | None = None,
     ) -> list[ModelType]:
-        """Gets multiple objects from the database that match the filter query
+        """Gets multiple objects from the database that match the filter query.
 
         Args:
             db:             SQLModel Session.
@@ -54,16 +55,26 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         if query is None:
             query = select(self.model)
 
-        query = query.offset(skip).limit(limit)
+        if params is not None:
+            skip = params.skip
+            limit = params.limit
+            query = params.apply_to_query(query, self.model)
+
+        if skip > 0:
+            query = query.offset(skip)
+
+        if limit > 0:
+            query = query.limit(limit)
+
         result = await db.exec(query)
         return result.all()
 
     async def create(self, db: AsyncSession, obj_in: CreateSchemaType) -> ModelType:
-        """Create an object in the database
+        """Create an object in the database.
 
         Args:
-            db:             SQLModel Session
-            obj_in:         SQLModel Object to Create in Database
+            db:             SQLModel Session.
+            obj_in:         SQLModel Object to Create in Database.
         """
         db_obj = self.model(**obj_in.model_dump())
         db.add(db_obj)

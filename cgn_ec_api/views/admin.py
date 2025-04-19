@@ -1,9 +1,9 @@
 from fastapi import APIRouter, status
 from fastapi.exceptions import HTTPException
 
-from cgn_ec_api.dependencies import DatabaseDep
+from cgn_ec_api.dependencies.database import DatabaseDep
 from cgn_ec_api import crud
-from cgn_ec_api.models import HyperTableChunk, HyperTableCompressionStats
+from cgn_ec_api.models.hypertables import HyperTableChunk, HyperTableCompressionStats
 
 router = APIRouter()
 

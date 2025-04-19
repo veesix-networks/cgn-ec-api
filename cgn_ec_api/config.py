@@ -19,5 +19,9 @@ class Settings(BaseSettings):
     API_KEY_HEADER: str = "x-api-key"
     API_KEYS: list[str] = ["default-change-me"]
 
+    REDIS_URI: str = "redis://localhost:6379"
+    REDIS_PASSWORD: str = "Pa55w0rd!"
+    CACHE_EXPIRE: int = 7200
+
 
 settings = Settings()
