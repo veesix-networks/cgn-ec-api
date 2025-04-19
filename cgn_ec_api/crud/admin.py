@@ -1,7 +1,7 @@
 from sqlmodel import Session, text, select
 
 from cgn_ec_api.crud.base import CRUDBase
-from cgn_ec_api.models import HyperTableChunk, HyperTableCompressionStats
+from cgn_ec_api.models.hypertables import HyperTableChunk, HyperTableCompressionStats
 
 
 class CRUDAdmin(CRUDBase[None, None, None]):

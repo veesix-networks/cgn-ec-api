@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 from cgn_ec_models.sqlmodel import NATSessionMapping
 
-from cgn_ec_api.dependencies import DatabaseDep
+from cgn_ec_api.dependencies.database import DatabaseDep
 
 router = APIRouter()
 
@@ -18,4 +18,6 @@ async def get_deterministic_nat_mapping(
     limit: int = 100,
     skip: int = 0,
 ):
-    return
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND, detail="Not currently implemented."
+    )
