@@ -1,6 +1,6 @@
 annotated-types==0.7.0 ; python_version >= "3.12" and python_version < "4.0"
 anyio==4.9.0 ; python_version >= "3.12" and python_version < "4.0"
-cgn-ec-models==0.1.0 ; python_version >= "3.12" and python_version < "4.0"
+cgn-ec-models==0.2.0 ; python_version >= "3.12" and python_version < "4.0"
 click==8.1.8 ; python_version >= "3.12" and python_version < "4.0"
 colorama==0.4.6 ; python_version >= "3.12" and python_version < "4.0" and platform_system == "Windows"
 fastapi==0.115.11 ; python_version >= "3.12" and python_version < "4.0"
