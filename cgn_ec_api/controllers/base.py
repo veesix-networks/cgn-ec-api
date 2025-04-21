@@ -94,6 +94,9 @@ class BaseController(ABC):
                 return
 
             module_attr(metric)
+
+            # Validate we can serialize the data after user has added their fields
+            metric.model_dump_json()
         except Exception as e:
             if settings.RAISE_ERROR_FROM_HOOK:
                 raise exceptions.CGNECHookException(hook, e)
