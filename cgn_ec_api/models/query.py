@@ -95,12 +95,14 @@ class SessionMappingParams(QueryParams):
     src_port: int | None = None
     timestamp_le: datetime | None = None
     timestamp_ge: datetime | None = None
+    hook: str | None = None
 
 
 class AddressMappingParams(QueryParams):
     x_ip: str | None = None
     timestamp_le: datetime | None = None
     timestamp_ge: datetime | None = None
+    hook: str | None = None
 
 
 class PortMappingParams(QueryParams):
@@ -110,6 +112,7 @@ class PortMappingParams(QueryParams):
     src_port: int | None = None
     timestamp_le: datetime | None = None
     timestamp_ge: datetime | None = None
+    hook: str | None = None
 
 
 class PortBlockMappingParams(QueryParams):
@@ -118,3 +121,4 @@ class PortBlockMappingParams(QueryParams):
     end_port: int | None = None
     timestamp_le: datetime | None = None
     timestamp_ge: datetime | None = None
+    hook: str | None = None

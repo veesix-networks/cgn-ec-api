@@ -1,8 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="allow")
+
+    HOOKS_DIRECTORY: Path = Path(__file__).parent.joinpath("hooks")
+    RAISE_ERROR_FROM_HOOK: bool = True
 
     CORS_ORIGINS: list[str] = [
         "http://localhost:8000",

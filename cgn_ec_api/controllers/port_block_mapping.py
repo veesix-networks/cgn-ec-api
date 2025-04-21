@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
-from fastapi import HTTPException, status
 
-from cgn_ec_models.sqlmodel import NATPortBlockMapping
+from cgn_ec_models.enums import NATEventEnum
+from cgn_ec_api.models.generic import NATPortBlockMappingRead
 
 from cgn_ec_api.config import settings
 from cgn_ec_api.controllers.base import (
@@ -11,12 +11,13 @@ from cgn_ec_api.controllers.base import (
 )
 from cgn_ec_api.models.query import PortBlockMappingParams
 from cgn_ec_api.crud.port_block_mapping import CRUDPortBlockMapping
+from cgn_ec_api import exceptions
 
 
 class PortBlockMappingControllerBase(BaseController):
     CRUDController = CRUDPortBlockMapping
 
-    async def _get(self, x_ip: str) -> NATPortBlockMapping:
+    async def _get(self, x_ip: str) -> NATPortBlockMappingRead:
         """
         Get a Port Block Mapping by x_ip, with caching.
 
@@ -32,16 +33,14 @@ class PortBlockMappingControllerBase(BaseController):
         )
 
         if not record:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND, detail="NAT Port Block Mapping not found."
-            )
+            raise exceptions.CGNECNATPortBlockMappingNotFoundError
 
-        return record
+        return NATPortBlockMappingRead.model_validate(record)
 
     async def _get_multi(
         self,
         params: PortBlockMappingParams | None = None,
-    ) -> list[NATPortBlockMapping]:
+    ) -> list[NATPortBlockMappingRead]:
         if not params.timestamp_ge:
             current_time_utc = datetime.now(tz=timezone.utc)
             timestamp_ge = current_time_utc - timedelta(
@@ -49,25 +48,31 @@ class PortBlockMappingControllerBase(BaseController):
             )
             params.timestamp_ge = timestamp_ge
 
-        records = await self.crud.get_multi(self.db, params=params)
+        records = [
+            NATPortBlockMappingRead.model_validate(record)
+            for record in await self.crud.get_multi(self.db, params=params)
+        ]
+        if params.hook:
+            for record in records:
+                self.process_hook(params.hook, NATEventEnum.PORT_BLOCK_MAPPING, record)
 
         return records
 
 
 class PortBlockMappingControllerAPI(BaseAPIController, PortBlockMappingControllerBase):
-    async def get_object(self, src_ip: str) -> NATPortBlockMapping:
+    async def get_object(self, src_ip: str) -> NATPortBlockMappingRead:
         return await super()._get(src_ip=src_ip)
 
     async def get_objects(
         self,
         params: PortBlockMappingParams | None = None,
-    ) -> list[NATPortBlockMapping]:
+    ) -> list[NATPortBlockMappingRead]:
         return await super()._get_multi(params=params)
 
 
 class PortBlockMappingControllerUI(BaseUIController, PortBlockMappingControllerBase):
-    async def get_object(self, *args, **kwargs) -> NATPortBlockMapping:
+    async def get_object(self, *args, **kwargs) -> NATPortBlockMappingRead:
         raise NotImplementedError
 
-    async def get_objects(self, *args, **kwargs) -> list[NATPortBlockMapping]:
+    async def get_objects(self, *args, **kwargs) -> list[NATPortBlockMappingRead]:
         raise NotImplementedError
