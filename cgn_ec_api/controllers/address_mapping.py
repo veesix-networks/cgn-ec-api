@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
-from fastapi import HTTPException, status
 
-from cgn_ec_models.sqlmodel import NATAddressMapping
+from cgn_ec_models.enums import NATEventEnum
+from cgn_ec_api.models.generic import NATAddressMappingRead
 
 from cgn_ec_api.config import settings
 from cgn_ec_api.controllers.base import (
@@ -11,12 +11,13 @@ from cgn_ec_api.controllers.base import (
 )
 from cgn_ec_api.models.query import AddressMappingParams
 from cgn_ec_api.crud.address_mapping import CRUDAddressMapping
+from cgn_ec_api import exceptions
 
 
 class AddressMappingControllerBase(BaseController):
     CRUDController = CRUDAddressMapping
 
-    async def _get(self, src_ip: str) -> NATAddressMapping:
+    async def _get(self, src_ip: str) -> NATAddressMappingRead:
         """
         Get a Address Mapping record by src_ip, with caching.
 
@@ -35,16 +36,14 @@ class AddressMappingControllerBase(BaseController):
         )
 
         if not record:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND, detail="NAT Address Mapping not found."
-            )
+            raise exceptions.CGNECNATAddressMappingNotFoundError
 
-        return record
+        return NATAddressMappingRead.model_validate(record)
 
     async def _get_multi(
         self,
         params: AddressMappingParams | None = None,
-    ) -> list[NATAddressMapping]:
+    ) -> list[NATAddressMappingRead]:
         if not params.timestamp_ge:
             current_time_utc = datetime.now(tz=timezone.utc)
             timestamp_ge = current_time_utc - timedelta(
@@ -52,25 +51,31 @@ class AddressMappingControllerBase(BaseController):
             )
             params.timestamp_ge = timestamp_ge
 
-        records = await self.crud.get_multi(self.db, params=params)
+        records = [
+            NATAddressMappingRead.model_validate(record)
+            for record in await self.crud.get_multi(self.db, params=params)
+        ]
+        if params.hook:
+            for record in records:
+                self.process_hook(params.hook, NATEventEnum.ADDRESS_MAPPING, record)
 
         return records
 
 
 class AddressMappingControllerAPI(BaseAPIController, AddressMappingControllerBase):
-    async def get_object(self, src_ip: str) -> NATAddressMapping:
+    async def get_object(self, src_ip: str) -> NATAddressMappingRead:
         return await super()._get(src_ip=src_ip)
 
     async def get_objects(
         self,
         params: AddressMappingParams | None = None,
-    ) -> list[NATAddressMapping]:
+    ) -> list[NATAddressMappingRead]:
         return await super()._get_multi(params=params)
 
 
 class AddressMappingControllerUI(BaseUIController, AddressMappingControllerBase):
-    async def get_object(self, *args, **kwargs) -> NATAddressMapping:
+    async def get_object(self, *args, **kwargs) -> NATAddressMappingRead:
         raise NotImplementedError
 
-    async def get_objects(self, *args, **kwargs) -> list[NATAddressMapping]:
+    async def get_objects(self, *args, **kwargs) -> list[NATAddressMappingRead]:
         raise NotImplementedError

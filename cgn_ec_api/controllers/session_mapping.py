@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
-from fastapi import HTTPException, status
 
-from cgn_ec_models.sqlmodel import NATSessionMapping
+from cgn_ec_models.enums import NATEventEnum
+from cgn_ec_api.models.generic import NATSessionMappingRead
 
 from cgn_ec_api.config import settings
 from cgn_ec_api.controllers.base import (
@@ -11,12 +11,13 @@ from cgn_ec_api.controllers.base import (
 )
 from cgn_ec_api.models.query import SessionMappingParams
 from cgn_ec_api.crud.session_mapping import CRUDSessionMapping
+from cgn_ec_api import exceptions
 
 
 class SessionMappingControllerBase(BaseController):
     CRUDController = CRUDSessionMapping
 
-    async def _get(self, src_ip: str) -> NATSessionMapping:
+    async def _get(self, src_ip: str) -> NATSessionMappingRead:
         """
         Get a Session Mapping by src_ip, with caching.
 
@@ -35,16 +36,14 @@ class SessionMappingControllerBase(BaseController):
         )
 
         if not record:
-            raise HTTPException(
-                status.HTTP_404_NOT_FOUND, detail="NAT Session Mapping not found."
-            )
+            raise exceptions.CGNECNATSessionMappingNotFoundError
 
-        return record
+        return NATSessionMappingRead.model_validate(record)
 
     async def _get_multi(
         self,
         params: SessionMappingParams | None = None,
-    ) -> list[NATSessionMapping]:
+    ) -> list[NATSessionMappingRead]:
         if not params.timestamp_ge:
             current_time_utc = datetime.now(tz=timezone.utc)
             timestamp_ge = current_time_utc - timedelta(
@@ -52,25 +51,37 @@ class SessionMappingControllerBase(BaseController):
             )
             params.timestamp_ge = timestamp_ge
 
-        records = await self.crud.get_multi(self.db, params=params)
+        records = [
+            NATSessionMappingRead.model_validate(record)
+            for record in await self.crud.get_multi(self.db, params=params)
+        ]
+        if params.hook:
+            for record in records:
+                self.process_hook(params.hook, NATEventEnum.SESSION_MAPPING, record)
 
         return records
 
 
 class SessionMappingControllerAPI(BaseAPIController, SessionMappingControllerBase):
-    async def get_object(self, src_ip: str) -> NATSessionMapping:
-        return await super()._get(src_ip=src_ip)
+    async def get_object(self, src_ip: str) -> NATSessionMappingRead:
+        try:
+            return await super()._get(src_ip=src_ip)
+        except exceptions.CGNECBaseException as e:
+            raise e.http()
 
     async def get_objects(
         self,
         params: SessionMappingParams | None = None,
-    ) -> list[NATSessionMapping]:
-        return await super()._get_multi(params=params)
+    ) -> list[NATSessionMappingRead]:
+        try:
+            return await super()._get_multi(params=params)
+        except exceptions.CGNECBaseException as e:
+            raise e.http()
 
 
 class SessionMappingControllerUI(BaseUIController, SessionMappingControllerBase):
-    async def get_object(self, *args, **kwargs) -> NATSessionMapping:
+    async def get_object(self, *args, **kwargs) -> NATSessionMappingRead:
         raise NotImplementedError
 
-    async def get_objects(self, *args, **kwargs) -> list[NATSessionMapping]:
+    async def get_objects(self, *args, **kwargs) -> list[NATSessionMappingRead]:
         raise NotImplementedError

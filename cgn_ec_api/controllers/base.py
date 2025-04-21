@@ -1,10 +1,15 @@
 from abc import ABC, abstractmethod
+import importlib.util
 from typing import TypeVar, Callable, Awaitable
+
+from cgn_ec_models.enums import NATEventEnum
 
 from cgn_ec_api.config import settings
 from cgn_ec_api.dependencies.database import DatabaseDep
 from cgn_ec_api.dependencies.redis import RedisServiceDep
 from cgn_ec_api.crud.base import CRUDBase
+from cgn_ec_api.models.generic import MetricBaseRead, HookMetadata
+from cgn_ec_api import exceptions
 
 from structlog import get_logger
 
@@ -62,6 +67,38 @@ class BaseController(ABC):
 
         await self.redis.set(cache_key, data.model_dump_json(), timeout=timeout)
         return data
+
+    def process_hook(
+        self, hook: str, event_type: NATEventEnum, metric: MetricBaseRead
+    ) -> None:
+        try:
+            if not isinstance(event_type, NATEventEnum):
+                raise exceptions.CGNECHookError(hook)
+
+            hook_file = settings.HOOKS_DIRECTORY.joinpath(f"{hook}.py")
+
+            if not hook_file.exists():
+                raise exceptions.CGNECHookNotFoundError(hook)
+
+            spec = importlib.util.spec_from_file_location(hook, str(hook_file))
+            if spec is None or spec.loader is None:
+                raise exceptions.CGNECHookError(hook)
+
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            event_type_normalized = event_type.lower().replace("-", "_")
+            module_attr = getattr(module, f"{event_type_normalized}_hook", None)
+
+            if not module_attr:
+                return
+
+            module_attr(metric)
+        except Exception as e:
+            if settings.RAISE_ERROR_FROM_HOOK:
+                raise exceptions.CGNECHookException(hook, e)
+
+            metric.hook_metadata = HookMetadata(error=f"({e.__class__.__name__}) {e}")
 
 
 class BaseUIController(BaseController):
