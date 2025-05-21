@@ -18,7 +18,7 @@ class MetricBaseRead(BaseModel):
 class NATSessionMappingRead(MetricBaseRead):
     host: IPv4Address
     event: int
-    vrf_id: int | None = None
+    vrf_id: str | None = None
     protocol: int
     src_ip: IPv4Address
     src_port: int
@@ -31,7 +31,7 @@ class NATSessionMappingRead(MetricBaseRead):
 class NATAddressMappingRead(MetricBaseRead):
     host: IPv4Address
     event: int
-    vrf_id: int | None = None
+    vrf_id: str | None = None
     src_ip: IPv4Address
     x_ip: IPv4Address
 
@@ -39,7 +39,7 @@ class NATAddressMappingRead(MetricBaseRead):
 class NATPortMappingRead(MetricBaseRead):
     host: IPv4Address
     event: int
-    vrf_id: int | None = None
+    vrf_id: str | None = None
     protocol: int
     src_ip: IPv4Address
     src_port: int
@@ -50,7 +50,7 @@ class NATPortMappingRead(MetricBaseRead):
 class NATPortBlockMappingRead(MetricBaseRead):
     host: IPv4Address
     event: int
-    vrf_id: int | None = None
+    vrf_id: str | None = None
     src_ip: IPv4Address
     x_ip: IPv4Address
     start_port: int
