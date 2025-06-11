@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Type, TypeVar, Union, Any, Optional
 
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, text
 from sqlmodel.sql.expression import Select, SelectOfScalar
 
 from pydantic import BaseModel, create_model
@@ -13,6 +13,8 @@ ModelType = TypeVar("ModelType", bound=SQLModel)
 class QueryParams(BaseModel):
     limit: int = Field(100, gt=1, le=214457)
     skip: int = Field(0, ge=0)
+    event: int | None = Field(None, ge=1, nullable=True)
+    order_by: str = Field("timestamp", schema_extra={'pattern': r"^\w+( (asc|desc))?$"})
 
     def build_query_params_model(
         base_model: Type[SQLModel],
@@ -21,7 +23,8 @@ class QueryParams(BaseModel):
         base_query_params: dict[str, tuple[Any, Any]] = {
             "limit": (int, Field(100, gt=0, le=100)),
             "skip": (int, Field(0, ge=0)),
-            "order_by": (str, "created_at"),
+            "event": (int | None, Field(None, ge=1, nullable=True)),
+            "order_by": (str, Field("timestamp", schema_extra={'pattern': r"^\w+( (asc|desc))?$"})),
         },
         base_class: Type[SQLModel] = SQLModel,
     ) -> Type[SQLModel]:
@@ -63,7 +66,7 @@ class QueryParams(BaseModel):
         suffix_pattern = re.compile(r"(.+?)_(" + "|".join(operator_map.keys()) + r")$")
 
         for field_name, field_value in self.model_dump(
-            exclude={"skip", "limit"}
+            exclude={"skip", "limit", "order_by"}
         ).items():
             if field_value is None:
                 continue
@@ -83,7 +86,7 @@ class QueryParams(BaseModel):
                 except AttributeError:
                     continue
 
-        return query.offset(self.skip).limit(self.limit)
+        return query.offset(self.skip).limit(self.limit).order_by(text(self.order_by))
 
 
 class SessionMappingParams(QueryParams):

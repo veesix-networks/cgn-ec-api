@@ -46,6 +46,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             query:          Select Query statement.
             skip:           Skip entries in database.
             limit:          Limit database results.
+            order_by:       Adjust ordering of results.
         """
         if query is not None and not isinstance(query, (Select, SelectOfScalar)):
             raise TypeError(
