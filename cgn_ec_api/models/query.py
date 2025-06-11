@@ -87,6 +87,8 @@ class QueryParams(BaseModel):
 
 
 class SessionMappingParams(QueryParams):
+    vrf_id: str | None = None
+    protocol: int | None = None
     x_ip: str | None = None
     x_port: int | None = None
     dst_ip: str | None = None
@@ -99,6 +101,8 @@ class SessionMappingParams(QueryParams):
 
 
 class AddressMappingParams(QueryParams):
+    vrf_id: str | None = None
+    src_ip: str | None = None
     x_ip: str | None = None
     timestamp_le: datetime | None = None
     timestamp_ge: datetime | None = None
@@ -106,6 +110,8 @@ class AddressMappingParams(QueryParams):
 
 
 class PortMappingParams(QueryParams):
+    vrf_id: str | None = None
+    protocol: int | None = None
     x_ip: str | None = None
     x_port: int | None = None
     src_ip: str | None = None
@@ -116,6 +122,8 @@ class PortMappingParams(QueryParams):
 
 
 class PortBlockMappingParams(QueryParams):
+    vrf_id: str | None = None
+    src_ip: str | None = None
     x_ip: str | None = None
     start_port: int | None = None
     end_port: int | None = None
