@@ -46,6 +46,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             query:          Select Query statement.
             skip:           Skip entries in database.
             limit:          Limit database results.
+            order_by:       Adjust ordering of results.
         """
         if query is not None and not isinstance(query, (Select, SelectOfScalar)):
             raise TypeError(
@@ -56,15 +57,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             query = select(self.model)
 
         if params is not None:
-            skip = params.skip
-            limit = params.limit
             query = params.apply_to_query(query, self.model)
-
-        if skip > 0:
-            query = query.offset(skip)
-
-        if limit > 0:
-            query = query.limit(limit)
 
         result = await db.exec(query)
         return result.all()
