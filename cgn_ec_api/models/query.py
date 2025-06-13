@@ -11,7 +11,7 @@ ModelType = TypeVar("ModelType", bound=SQLModel)
 
 
 class QueryParams(BaseModel):
-    limit: int = Field(100, gt=1, le=214457)
+    limit: int = Field(100, gt=0, le=100)
     skip: int = Field(0, ge=0)
     event: int | None = Field(None, ge=1, nullable=True)
     order_by: str = Field("timestamp", schema_extra={'pattern': r"^\w+( (asc|desc))?$"})
