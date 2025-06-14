@@ -4,12 +4,7 @@ from fastapi import HTTPException, status
 
 class CGNECBaseException(ABC, Exception):
     @abstractmethod
-    def http(self) -> HTTPException:
-        """
-        Convert this exception into an HTTPException for FastAPI.
-        Must be implemented by all subclasses.
-        """
-        pass
+    def http(self) -> HTTPException: ...
 
 
 class CGNECHookNotFoundError(CGNECBaseException):
@@ -81,3 +76,15 @@ class CGNECNATPortBlockMappingNotFoundError(CGNECBaseException):
 
     def http(self) -> HTTPException:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=self.message)
+
+
+class CGNECInvalidOrderByFieldError(CGNECBaseException):
+    def __init__(self, field_name: str):
+        self.field_name = field_name
+        self.message = f"Invalid order_by field: '{field_name}'"
+        super().__init__(self.message)
+
+    def http(self) -> HTTPException:
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=self.message
+        )
