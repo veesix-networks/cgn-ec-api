@@ -7,6 +7,8 @@ from sqlmodel.sql.expression import Select, SelectOfScalar
 
 from pydantic import BaseModel, create_model
 
+from cgn_ec_api.exceptions import CGNECInvalidOrderByFieldError
+
 ModelType = TypeVar("ModelType", bound=SQLModel)
 
 
@@ -14,7 +16,7 @@ class QueryParams(BaseModel):
     limit: int = Field(100, gt=0, le=100)
     skip: int = Field(0, ge=0)
     event: int | None = Field(None, ge=1, nullable=True)
-    order_by: str = Field("timestamp", schema_extra={'pattern': r"^\w+( (asc|desc))?$"})
+    order_by: str = Field("timestamp", schema_extra={"pattern": r"^\w+( (asc|desc))?$"})
 
     def build_query_params_model(
         base_model: Type[SQLModel],
@@ -24,7 +26,10 @@ class QueryParams(BaseModel):
             "limit": (int, Field(100, gt=0, le=100)),
             "skip": (int, Field(0, ge=0)),
             "event": (int | None, Field(None, ge=1, nullable=True)),
-            "order_by": (str, Field("timestamp", schema_extra={'pattern': r"^\w+( (asc|desc))?$"})),
+            "order_by": (
+                str,
+                Field("timestamp", schema_extra={"pattern": r"^\w+( (asc|desc))?$"}),
+            ),
         },
         base_class: Type[SQLModel] = SQLModel,
     ) -> Type[SQLModel]:
@@ -86,7 +91,19 @@ class QueryParams(BaseModel):
                 except AttributeError:
                     continue
 
-        return query.offset(self.skip).limit(self.limit).order_by(text(self.order_by))
+        order_by_clause = self._build_order_by_clause(model)
+        return query.offset(self.skip).limit(self.limit).order_by(order_by_clause)
+
+    def _build_order_by_clause(self, model: Type[ModelType]):
+        """Validate the order by to confirm the field exists and allow desc/asc"""
+        order_by_parts = self.order_by.strip().split()
+        field_name = order_by_parts[0]
+        direction = order_by_parts[1] if len(order_by_parts) > 1 else "asc"
+
+        if not hasattr(model, field_name):
+            raise CGNECInvalidOrderByFieldError(field_name)
+
+        return text(f"{field_name} {direction}")
 
 
 class SessionMappingParams(QueryParams):
