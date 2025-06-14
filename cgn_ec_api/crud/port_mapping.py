@@ -1,4 +1,4 @@
-from cgn_ec_models.sqlmodel import NATPortMapping
+from cgn_ec_api.models.metrics import NATPortMapping
 
 from cgn_ec_api.crud.base import CRUDBase
 
