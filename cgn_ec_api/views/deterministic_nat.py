@@ -1,14 +1,14 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status
-from cgn_ec_models.sqlmodel import NATSessionMapping
+from cgn_ec_api.models.generic import NATSessionMappingRead
 
 from cgn_ec_api.dependencies.database import DatabaseDep
 
 router = APIRouter()
 
 
-@router.get("/", response_model=list[NATSessionMapping])
+@router.get("/", response_model=list[NATSessionMappingRead])
 async def get_deterministic_nat_mapping(
     db: DatabaseDep,
     x_ip: str = None,

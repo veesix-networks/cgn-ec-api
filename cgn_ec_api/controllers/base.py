@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import importlib.util
 from typing import TypeVar, Callable, Awaitable
 
-from cgn_ec_models.enums import NATEventEnum
+from cgn_ec_api.models.enums import NATEventEnum
 
 from cgn_ec_api.config import settings
 from cgn_ec_api.dependencies.database import DatabaseDep

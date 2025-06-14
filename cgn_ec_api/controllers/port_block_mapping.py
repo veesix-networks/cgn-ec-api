@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 
-from cgn_ec_models.enums import NATEventEnum
+from cgn_ec_api.models.enums import NATEventEnum
 from cgn_ec_api.models.generic import NATPortBlockMappingRead
 
 from cgn_ec_api.config import settings
