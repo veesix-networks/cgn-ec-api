@@ -8,6 +8,10 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_CREATE: false
+      TESTCONTAINER_DOCKER_NETWORK: cgn-ec-tests
+      DOCKER_BUILDKIT: 1
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
