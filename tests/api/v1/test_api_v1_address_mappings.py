@@ -65,3 +65,5 @@ async def test_api_v1_address_mappings_get_params_src_ip(
 
     for session in data:
         assert session["src_ip"] == record.src_ip
+
+    assert 1 == 2
