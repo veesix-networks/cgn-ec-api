@@ -12,6 +12,10 @@ jobs:
       POETRY_VIRTUALENVS_CREATE: false
       TESTCONTAINER_DOCKER_NETWORK: cgn-ec-tests
       DOCKER_BUILDKIT: 1
+      POSTGRES_HOST: localhost
+      POSTGRES_USER: cgnec
+      POSTGRES_PASSWORD: cgnec
+      POSTGRES_DB: cgnec
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
