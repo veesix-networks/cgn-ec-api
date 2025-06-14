@@ -1,4 +1,4 @@
-name: Lint with Ruff
+name: Test
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
     env:
       POETRY_VIRTUALENVS_CREATE: false

@@ -1,5 +1,4 @@
 import asyncio
-from datetime import datetime
 from typing import Generator, AsyncGenerator
 
 import pytest
@@ -21,55 +20,7 @@ from cgn_ec_api.models.metrics import (
     NATSessionMapping,
 )
 
-
-async def insert_test_data(session: AsyncSession):
-    """Insert initial test data."""
-    sample_data = [
-        NATSessionMapping(
-            timestamp=datetime.now(),
-            host="192.0.2.1",
-            event=1,
-            protocol=6,
-            src_ip="192.168.123.11",
-            src_port=50234,
-            x_ip="192.0.2.33",
-            x_port=50123,
-            dst_ip="224.0.0.0",
-            dst_port=443,
-        ),
-        NATAddressMapping(
-            timestamp=datetime.now(),
-            host="192.0.2.1",
-            event=1,
-            src_ip="192.168.123.11",
-            x_ip="192.0.2.33",
-        ),
-        NATPortMapping(
-            timestamp=datetime.now(),
-            host="192.0.2.1",
-            event=1,
-            protocol=6,
-            src_ip="192.168.123.11",
-            src_port=50234,
-            x_ip="192.0.2.33",
-            x_port=50123,
-        ),
-        NATPortBlockMapping(
-            timestamp=datetime.now(),
-            host="192.0.2.1",
-            event=1,
-            src_ip="192.168.123.11",
-            x_ip="192.0.2.33",
-            start_port=50000,
-            end_port=50100,
-        ),
-    ]
-
-    for item in sample_data:
-        session.add(item)
-
-    await session.commit()
-
+pytest_plugins = ["tests.fixtures.metrics"]
 
 postgres = PostgresContainer(
     "postgres:17-alpine",
@@ -113,14 +64,19 @@ async def async_test_app(async_session: AsyncSession):
 
 
 @pytest.fixture(scope="session")
-def event_loop(request) -> Generator:  # noqa: indirect usage
+def event_loop(request) -> Generator:
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 
 @pytest_asyncio.fixture(scope="session")
-async def async_session() -> AsyncSession:
+async def async_session(
+    generate_session_mapping_metrics: list[NATSessionMapping],
+    generate_address_mapping_metrics: list[NATAddressMapping],
+    generate_port_mapping_metrics: list[NATPortMapping],
+    generate_port_block_mapping_metrics: list[NATPortBlockMapping],
+) -> AsyncSession:
     test_engine = get_engine(
         f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@localhost:{postgres.get_exposed_port(settings.POSTGRES_PORT)}/{settings.POSTGRES_DB}",
     )
@@ -141,7 +97,13 @@ async def async_session() -> AsyncSession:
                 ],
             )
 
-        await insert_test_data(s)
+        metrics = (
+            generate_session_mapping_metrics
+            + generate_address_mapping_metrics
+            + generate_port_mapping_metrics
+            + generate_port_block_mapping_metrics
+        )
+        await insert_test_data(s, metrics)
         yield s
 
     async with test_engine.begin() as conn:
@@ -156,3 +118,11 @@ async def async_session() -> AsyncSession:
         )
 
     await test_engine.dispose()
+
+
+async def insert_test_data(session: AsyncSession, metrics: list[dict]):
+    """Insert initial test data."""
+    for item in metrics:
+        session.add(item)
+
+    await session.commit()
