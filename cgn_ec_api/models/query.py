@@ -147,6 +147,25 @@ class PortBlockMappingParams(QueryParams):
     x_ip: str | None = None
     start_port: int | None = None
     end_port: int | None = None
+    port: int | None = None
     timestamp_le: datetime | None = None
     timestamp_ge: datetime | None = None
     hook: str | None = None
+
+    def apply_to_query(
+        self, query: Select | SelectOfScalar, model: Type[ModelType]
+    ) -> Union[Select, SelectOfScalar]:
+        """
+        Apply filters with special handling for port parameter.
+        The port parameter matches rows where start_port <= port <= end_port.
+        """
+        if self.port is not None:
+            query = query.where(model.start_port <= self.port)
+            query = query.where(model.end_port >= self.port)
+
+        # Exclude port from the parent's processing since it's not a model field
+        original_port = self.port
+        self.port = None
+        query = super().apply_to_query(query, model)
+        self.port = original_port
+        return query
