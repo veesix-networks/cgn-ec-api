@@ -79,3 +79,20 @@ async def test_api_v1_port_block_mappings_get_params_end_port(
 
     for session in data:
         assert session["end_port"] == record.end_port
+
+
+@pytest.mark.asyncio
+async def test_api_v1_port_block_mappings_get_params_port(
+    async_test_app: AsyncClient,
+    generate_port_block_mapping_metrics: list[NATPortBlockMapping],
+):
+    record = choice(generate_port_block_mapping_metrics)
+    port = (record.start_port + record.end_port) // 2
+
+    params = {"port": port}
+    response = await async_test_app.get("/v1/port_block_mappings/", params=params)
+    data = response.json()
+
+    assert len(data) >= 1
+    for mapping in data:
+        assert mapping["start_port"] <= port <= mapping["end_port"]

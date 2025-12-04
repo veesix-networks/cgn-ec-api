@@ -11,7 +11,7 @@ from sqlmodel import (
     Integer,
     VARCHAR,
 )
-from sqlalchemy.dialects.postgresql import INET, TIMEZONE
+from sqlalchemy.dialects.postgresql import INET, TIMESTAMP
 
 from cgn_ec_api.models.enums import NATEventTypeEnum
 
