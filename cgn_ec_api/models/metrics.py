@@ -11,14 +11,14 @@ from sqlmodel import (
     Integer,
     VARCHAR,
 )
-from sqlalchemy.dialects.postgresql import INET
+from sqlalchemy.dialects.postgresql import INET, TIMEZONE
 
 from cgn_ec_api.models.enums import NATEventTypeEnum
 
 
 class MetricBase(SQLModel):
     model_config = ConfigDict(use_enum_values=True)
-    timestamp: datetime
+    timestamp: datetime = Field(sa_type=TIMESTAMP(timezone=True))
 
 
 class NATSessionMapping(MetricBase, table=True):
